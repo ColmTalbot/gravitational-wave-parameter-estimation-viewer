@@ -8,8 +8,6 @@ app = marimo.App()
 def _(mo):
     mo.md(
         r"""
-    # Gravitational Wave Parameter Estimation Sample Viewer
-
     A simple, browser-based, visualiser for gravitational-wave event posteriors.
 
     This notebook downloads samples released via the gravitational-wave open science center (GWOSC) using `gwsamplefind` and produces one and two-dimensional plots.
@@ -36,7 +34,6 @@ def _():
 
     import altair as alt
     import marimo as mo
-    import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
     from gwsamplefind.client import Client
@@ -311,11 +308,27 @@ def _(alt, events, mo, np, pd, posts, two_dimensional_plot_data):
     return
 
 
-@app.cell
-def _(alt, events, parameters, pd, posts):
+@app.cell(hide_code=True)
+def _(mo, parameters):
+    scatter_parameters = mo.ui.multiselect(
+        options=parameters,
+        label="Scatter parameters:",
+        searchable=True,
+    )
+
+    scatter_parameters
+    return (scatter_parameters,)
+
+
+@app.cell(hide_code=True)
+def _(alt, events, mo, pd, posts, scatter_parameters):
+    _parameters = scatter_parameters.value
+
+    mo.stop(len(_parameters) == 0)
+
     _long_posts = list()
     for _post, _event in zip(posts, events):
-        _post = _post.reset_index()
+        _post = _post.reset_index()[_parameters]
         _post["event"] = _event
         _long_posts.append(_post)
     _long_post = pd.concat(_long_posts)
@@ -328,8 +341,8 @@ def _(alt, events, parameters, pd, posts):
         width=150,
         height=150
     ).repeat(
-        row=parameters,
-        column=parameters,
+        row=_parameters,
+        column=_parameters,
     ).interactive()
     return
 
